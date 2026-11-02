@@ -1,35 +1,46 @@
 # BullyBlock UMB
 
-Un espacio digital de la Universidad Manuela Beltrán para pedir orientación y reportar situaciones de acoso o problemas de convivencia. La idea es que cualquier estudiante pueda pedir ayuda con claridad y cuidado: los reportes son confidenciales por defecto y se pueden seguir con un código privado.
+BullyBlock is a support and case-reporting platform for the Universidad Manuela Beltrán community. Students can report bullying and other campus safety concerns, request guidance, and follow up privately. Authorized staff can review cases, coordinate appointments, and document their work.
 
-## ¿Qué puedes hacer?
+## What you can do
 
-- Crear una cuenta para solicitar citas de orientación y revisar los reportes asociados a ella.
-- Enviar un reporte confidencial sin vincularlo a tu cuenta. Al enviarlo, guarda el código que aparece: lo necesitarás para consultar el seguimiento.
-- Consultar el estado de un reporte y leer las actualizaciones que el equipo haya compartido contigo.
-- Gestionar reportes y citas desde una cuenta institucional con rol `SUPPORT` o `ADMIN`.
-- Cambiar entre tema claro y oscuro, editar el nombre y subir una foto de perfil.
-- Asignar una persona profesional a cada cita, revisar pendientes e historial y exportar reportes a CSV.
-- Buscar casos y revisar indicadores de gestión desde el panel institucional.
+- Submit a confidential report and follow its progress with a private tracking code.
+- Create a student account to request appointments and review reports linked to that account.
+- Edit your profile and upload a profile picture.
+- Request a counseling appointment and see the assigned professional when one is selected.
+- Manage reports and appointments from a staff CRM workspace.
+- Assign appointments to registered members of the psychosocial team, review appointment history, and export case lists to CSV.
+- Search registered accounts and manage roles from the administrator-only role panel.
+- Switch between light and dark themes.
 
-La portada informativa está en **http://localhost:8081/**. El espacio estudiantil está en **/reportes** y el CRM institucional en **/gestion**. Son dos interfaces separadas; la API valida la sesión y el rol antes de entregar datos del CRM.
+## The two portals
 
-## La forma más rápida de iniciar
+The public landing page explains the service before a visitor enters either workspace.
 
-Esta opción levanta la página, el backend y MySQL juntos con Docker.
+| Page | URL | Who it is for |
+|---|---|---|
+| About and welcome | `http://localhost:8081/` | Anyone who wants to learn about BullyBlock |
+| Student reporting portal | `http://localhost:8081/reportes` | Students and report submitters |
+| Institutional CRM | `http://localhost:8081/gestion` | Authorized administrators and psychosocial staff |
 
-### 1. Inicia Docker Desktop
+The CRM has its own navigation and dashboard. The backend checks the signed-in account and its current role before returning staff data.
 
-Abre Docker Desktop y espera hasta que indique que el motor está activo. En Windows, el proyecto necesita el motor de contenedores Linux. Si Docker se queja de que no encuentra `dockerDesktopLinuxEngine`, el motor todavía no está disponible para la terminal.
+## Start with Docker
 
-Puedes revisar el estado en PowerShell:
+Docker Compose starts the frontend, Spring Boot API, and MySQL database together.
+
+### 1. Start Docker Desktop
+
+Open Docker Desktop and wait until its engine is running. On Windows, this project needs the Linux container engine. If Docker reports that it cannot find `dockerDesktopLinuxEngine`, the engine is not ready yet.
+
+You can check the engine from PowerShell:
 
 ```powershell
 docker desktop status
 docker desktop engine ls
 ```
 
-Si hace falta, inicia Docker Desktop y cambia al motor Linux:
+If needed, start Docker Desktop and select the Linux engine:
 
 ```powershell
 docker desktop start
@@ -37,134 +48,148 @@ docker desktop engine use linux
 docker info
 ```
 
-Espera a que `docker info` muestre los detalles del servidor antes de continuar.
+Wait for `docker info` to show server details before continuing.
 
-### 2. Abre una terminal en la carpeta del proyecto
-
-La terminal debe estar en la misma carpeta donde está `compose.yaml`, por ejemplo:
+### 2. Open a terminal in the project folder
 
 ```powershell
 cd C:\Users\Yunio\Downloads\university-bullying-reporting-system
 ```
 
-### 3. Inicia la aplicación
+Run this from the folder that contains `compose.yaml`.
+
+### 3. Build and start the services
 
 ```powershell
 docker compose up --build
 ```
 
-La primera vez Docker descarga las imágenes y construye los servicios, así que puede tardar unos minutos. Deja esa terminal abierta mientras usas la aplicación.
+The first build downloads container images and dependencies, so it may take several minutes. Keep this terminal open while using the application. The frontend waits for the backend to become available before starting.
 
-La página espera a que el backend esté disponible antes de arrancar. Si la web abre pero aparece un error al iniciar sesión o crear una cuenta, revisa el motivo del cierre del backend en otra terminal:
+If the backend exits or account creation fails, inspect its logs in another terminal:
 
 ```powershell
 docker compose logs --no-color --tail=150 backend
 ```
 
-Para ver también el estado de MySQL:
+To inspect MySQL startup and connection logs:
 
 ```powershell
 docker compose logs --no-color --tail=150 database
 ```
 
-### 4. Abre BullyBlock
+### 4. Open BullyBlock
 
-Entra a **http://localhost:8081** en tu navegador. Desde allí puedes crear una cuenta, solicitar orientación o enviar un reporte confidencial.
+Visit **http://localhost:8081/**. From the landing page, choose the student portal or institutional CRM.
 
-La cuenta inicial de administración se crea desde las variables `APP_BOOTSTRAP_ADMIN_EMAIL` y `APP_BOOTSTRAP_ADMIN_PASSWORD` del archivo local `.env`. En este entorno, el correo inicial es `admin.crm@umb.edu.co`; consulta la contraseña generada en `.env` y entra en **http://localhost:8081/gestion**. El archivo `.env` está excluido de Git. No reutilices esta contraseña en otros sistemas.
+The local `.env` file configures an initial administrator account. Its email is `admin.crm@umb.edu.co`; the generated password is stored in `.env`. Open **http://localhost:8081/gestion** and sign in with those credentials. The `.env` file is ignored by Git and must not be committed. The bootstrap account is created only when that email is unused; if the email already belongs to a non-admin account, the backend stops with a clear configuration error instead of silently elevating it.
 
-### 5. Detén la aplicación cuando termines
+### 5. Stop the application
 
-En la terminal de Docker, presiona `Ctrl+C`. Para levantarla otra vez, ejecuta `docker compose up` desde la carpeta del proyecto.
+Press `Ctrl+C` in the Compose terminal. Start the services again with:
 
-Los datos de MySQL se conservan en el volumen `bullyblock-db`. `docker compose down` detiene y elimina los contenedores, pero conserva ese volumen. **`docker compose down -v` también borra la base de datos y sus datos.**
+```powershell
+docker compose up
+```
 
-## Ejecutar en modo desarrollo
+MySQL data is stored in the `bullyblock-db` volume. `docker compose down` removes the containers and keeps the database volume. **`docker compose down -v` also deletes the database and its data.**
 
-Usa esta opción si vas a editar el frontend o backend y quieres que los cambios se reflejen sin reconstruir Docker.
+## Run in development mode
 
-Necesitas Java 21, Maven 3.9 o superior, Node.js 24, npm y Docker Desktop solo si quieres usar MySQL. Sin Docker, el backend usa H2 en memoria.
+Use this setup when editing the backend or frontend without rebuilding the Docker images.
 
-1. Abre una terminal en `backend/` y ejecuta:
+You need Java 21, Maven 3.9 or later, Node.js 24, and npm. Docker Desktop is only needed if you want to use MySQL. Without Docker, the backend uses an in-memory H2 database.
+
+1. In a terminal opened in `backend/`, start the API:
 
    ```powershell
    mvn spring-boot:run
    ```
 
-   La API queda disponible en `http://localhost:8080`.
+   The API runs at `http://localhost:8080`.
 
-2. Abre otra terminal en `frontend/` y ejecuta:
+2. In a second terminal opened in `frontend/`, install dependencies and start Vite:
 
    ```powershell
    npm ci
    npm run dev
    ```
 
-3. Abre **http://localhost:5173**. Vite reenvía las llamadas `/api` al backend.
+3. Open **http://localhost:5173**. Vite forwards `/api` requests to the backend.
 
-Con H2 en memoria, los datos de desarrollo desaparecen al detener el backend. Para conectarte a MySQL, configura el perfil `mysql` y las variables `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` y `COOKIE_SECURE`.
+H2 development data disappears when the backend stops. To use MySQL, activate the `mysql` profile and configure `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, and `COOKIE_SECURE`.
 
-## Recorrido sugerido
+## A suggested first visit
 
-1. Crea una cuenta para solicitar orientación o ver los reportes que hayas asociado a ella.
-2. En **Reportar un caso**, deja marcada la opción confidencial si no quieres vincular el reporte a tu cuenta.
-3. Al terminar, guarda el código privado que aparece en pantalla.
-4. En **Mis reportes**, pega ese código para consultar el estado y los mensajes del equipo.
-5. Para pedir una cita de orientación, inicia sesión y selecciona una fecha, hora y modalidad.
+1. Read the landing page to learn how reports and support work.
+2. Open the student portal. Create an account if you want account-linked reports or an appointment. Public registration always creates a `STUDENT` account.
+3. To submit a confidential report, leave the confidential option selected. Save the private tracking code shown after submission.
+4. Open **My reports** and enter that code to view the status and updates shared by the staff team.
+5. To request guidance, sign in and choose a preferred date, time, and appointment format.
 
-Un reporte confidencial no aparece en la lista de reportes de la cuenta. Se consulta usando su código privado. No compartas ese código: quien lo tenga puede ver el estado y las actualizaciones que el equipo haya marcado como visibles.
+A confidential report is not linked to the student's account. Anyone who has its tracking code can see its status and reporter-visible updates, so keep that code private.
 
-## Roles de gestión
+## Staff roles and account management
 
-El registro público solo crea cuentas con rol `STUDENT`. Un `ADMIN` puede abrir **Usuarios y roles** en `/gestion`, buscar una cuenta por correo y asignarle rol de estudiante, equipo psicosocial (`SUPPORT`) o administración (`ADMIN`). La persona debe registrarse primero. Cada cambio se guarda en una bitácora con la cuenta que hizo el cambio, rol anterior, rol nuevo y fecha. El sistema impide quitar el rol al último administrador. Las sesiones deben volver a iniciar para recibir su rol nuevo; los permisos de la API comprueban el rol vigente al atender rutas de gestión.
+The public registration form cannot create staff or administrator accounts. A person must register first. An `ADMIN` can then open **Users and roles** in the CRM, find the registered account by email, and assign one of these roles:
 
-En una instalación nueva y solo como operación de administración controlada, se puede promover una cuenta ya creada con:
+- `STUDENT` — student and report submitter.
+- `SUPPORT` — psychosocial team member who can manage reports and appointments.
+- `ADMIN` — institutional administrator who can also manage account roles.
+
+Role changes are written to an audit history with the target account, the previous and new roles, the acting administrator, and the change time. The system prevents removing the final administrator. Users need to sign in again to receive their new role. Staff API requests also check the role currently stored in the database.
+
+Appointment assignment is limited to registered accounts with the `SUPPORT` role. If the psychosocial team member is not listed, an administrator must first assign that account the `SUPPORT` role.
+
+For controlled database administration, an existing account can also be promoted manually:
 
 ```sql
 UPDATE accounts
 SET account_role = 'ADMIN'
-WHERE email = 'cuenta-institucional@umb.edu.co';
+WHERE email = 'institutional-account@umb.edu.co';
 ```
 
-No expongas esta operación como una ruta pública de la API.
+Never expose this database operation as a public API route.
 
-## API disponible
+## API overview
 
-| Método | Ruta | Quién puede usarla | Para qué sirve |
+All routes are under `/api`. Mutating requests use the session and CSRF protection configured by the backend.
+
+| Method | Route | Access | Purpose |
 |---|---|---|---|
-| `GET` | `/api/auth/csrf` | Público | Preparar solicitudes protegidas contra CSRF |
-| `POST` | `/api/auth/register` | Público | Crear una cuenta e iniciar sesión |
-| `POST` | `/api/auth/login` | Público | Iniciar sesión |
-| `GET` | `/api/auth/session` | Cuenta autenticada | Consultar la cuenta activa |
-| `PATCH` | `/api/auth/profile` | Cuenta autenticada | Actualizar el nombre y la foto de perfil |
-| `POST` | `/api/auth/logout` | Cuenta autenticada | Cerrar sesión |
-| `POST` | `/api/cases` | Público | Crear un reporte confidencial |
-| `POST` | `/api/cases/track` | Con el código privado | Consultar estado e hitos visibles |
-| `GET` | `/api/cases/mine` | Cuenta autenticada | Listar reportes vinculados a esa cuenta |
-| `GET`, `POST` | `/api/appointments` | Cuenta autenticada | Consultar o solicitar citas propias |
-| `GET` | `/api/admin/cases` | `SUPPORT` o `ADMIN` | Consultar la bandeja de reportes |
-| `PATCH` | `/api/admin/cases/{id}/status` | `SUPPORT` o `ADMIN` | Cambiar estado y añadir una actualización visible |
-| `GET`, `POST` | `/api/admin/cases/{id}/updates` | `SUPPORT` o `ADMIN` | Leer el historial completo o añadir una actualización |
-| `GET` | `/api/admin/appointments` | `SUPPORT` o `ADMIN` | Consultar solicitudes de orientación |
-| `GET` | `/api/admin/appointments/psychologists` | `SUPPORT` o `ADMIN` | Ver cuentas del equipo psicosocial para asignar citas |
-| `PATCH` | `/api/admin/appointments/{id}/status` | `SUPPORT` o `ADMIN` | Confirmar, completar o cancelar una cita |
-| `PATCH` | `/api/admin/appointments/{id}/assignment` | `SUPPORT` o `ADMIN` | Asignar a una persona profesional |
-| `GET` | `/api/admin/accounts` | `ADMIN` | Buscar cuentas registradas |
-| `PATCH` | `/api/admin/accounts/role` | `ADMIN` | Cambiar el rol de una cuenta registrada |
-| `GET` | `/api/admin/accounts/role-history` | `ADMIN` | Consultar la bitácora de cambios de rol |
-| `GET` | `/actuator/health` | Público | Consultar el estado del backend |
+| `GET` | `/api/auth/csrf` | Public | Initialize a CSRF token for browser requests |
+| `POST` | `/api/auth/register` | Public | Create a student account and sign in |
+| `POST` | `/api/auth/login` | Public | Sign in |
+| `GET` | `/api/auth/session` | Signed-in account | Get the current account |
+| `PATCH` | `/api/auth/profile` | Signed-in account | Update the account name and profile picture |
+| `POST` | `/api/auth/logout` | Signed-in account | Sign out |
+| `POST` | `/api/cases` | Public | Submit a confidential report |
+| `POST` | `/api/cases/track` | Private tracking code | View report status and reporter-visible updates |
+| `GET` | `/api/cases/mine` | Signed-in account | List reports linked to the account |
+| `GET`, `POST` | `/api/appointments` | Signed-in account | List or request the account's appointments |
+| `GET` | `/api/admin/cases` | `SUPPORT` or `ADMIN` | List reports for staff review |
+| `PATCH` | `/api/admin/cases/{id}/status` | `SUPPORT` or `ADMIN` | Change report status and add a visible update |
+| `GET`, `POST` | `/api/admin/cases/{id}/updates` | `SUPPORT` or `ADMIN` | Read or add report updates |
+| `GET` | `/api/admin/appointments` | `SUPPORT` or `ADMIN` | List appointment requests |
+| `GET` | `/api/admin/appointments/psychologists` | `SUPPORT` or `ADMIN` | List registered psychosocial staff for assignment |
+| `PATCH` | `/api/admin/appointments/{id}/status` | `SUPPORT` or `ADMIN` | Confirm, complete, or cancel an appointment |
+| `PATCH` | `/api/admin/appointments/{id}/assignment` | `SUPPORT` or `ADMIN` | Assign a registered psychosocial staff member |
+| `GET` | `/api/admin/accounts` | `ADMIN` | Search registered accounts |
+| `PATCH` | `/api/admin/accounts/role` | `ADMIN` | Change the role of a registered account |
+| `GET` | `/api/admin/accounts/role-history` | `ADMIN` | Review the role-change audit history |
+| `GET` | `/actuator/health` | Public | Check backend health |
 
-## Cómo está organizado
+## Project structure
 
-- `frontend/`: interfaz React, componentes, estilos y cliente de la API.
-- `backend/`: API Spring Boot organizada en cuentas, reportes, citas, seguridad y errores.
-- `backend/src/main/resources/db/migration/`: cambios de esquema de MySQL/H2 gestionados por Flyway.
-- `compose.yaml`: servicios de MySQL, backend y frontend.
+- `frontend/` — React portals, shared components, styles, and the API client.
+- `backend/` — Spring Boot REST API, organized into authentication, cases, appointments, security, and common error handling.
+- `backend/src/main/resources/db/migration/` — Flyway migrations for MySQL and H2.
+- `compose.yaml` — MySQL, backend, and frontend services.
 
-El backend usa Spring Boot 4.1.2 y Java 21. Spring Boot 4 requiere Java 17 o superior, y el starter `webmvc` proporciona Spring MVC para la API REST. Consulta los [requisitos oficiales](https://docs.spring.io/spring-boot/system-requirements.html) y la [referencia de starters](https://docs.spring.io/spring-boot/reference/using/build-systems.html).
+The backend uses Spring Boot 4.1.2 and Java 21. See the official [Spring Boot system requirements](https://docs.spring.io/spring-boot/system-requirements.html) and [starter reference](https://docs.spring.io/spring-boot/reference/using/build-systems.html).
 
-## Privacidad y despliegue
+## Privacy and deployment
 
-Las contraseñas se guardan con BCrypt. La aplicación usa sesiones, cookies HTTP-only, protección CSRF y permisos por rol. Los reportes confidenciales no guardan vínculo con la cuenta; el código aleatorio de seguimiento tiene 192 bits. Las citas y listas personales solo se consultan desde la cuenta correspondiente.
+Passwords are hashed with BCrypt. Browser sessions use HTTP-only cookies, CSRF protection, and role-based authorization. Confidential reports are stored without a link to the reporter account; their tracking codes contain 192 bits of randomness. Personal reports and appointments are scoped to the signed-in account.
 
-Los valores de contraseña que trae Compose son solo para desarrollo local. Antes de usar datos reales, configura secretos propios, HTTPS y `COOKIE_SECURE=true`; además, la universidad debe aprobar los roles, la retención de datos, las copias de respaldo, el control de acceso y los procedimientos de atención de incidentes. Evita incluir información clínica que no sea necesaria.
+Compose credentials are for local development. Before using real university data, configure unique secrets, HTTPS, and `COOKIE_SECURE=true`. The university should also approve staff access, retention periods, backups, incident handling, and the minimum information needed for case review. Avoid collecting unnecessary clinical details.
