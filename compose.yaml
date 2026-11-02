@@ -1,0 +1,51 @@
+name: bullyblock
+services:
+  database:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: bullyblock
+      MYSQL_USER: bullyblock
+      MYSQL_PASSWORD: ${DB_PASSWORD:-local-dev-password-change-me}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-local-root-password-change-me}
+    volumes:
+      - bullyblock-db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  backend:
+    build: ./backend
+    environment:
+      SPRING_PROFILES_ACTIVE: mysql
+      DB_URL: jdbc:mysql://database:3306/bullyblock?sslMode=REQUIRED&serverTimezone=UTC
+      DB_USERNAME: bullyblock
+      DB_PASSWORD: ${DB_PASSWORD:-local-dev-password-change-me}
+      APP_BOOTSTRAP_ADMIN_EMAIL: ${APP_BOOTSTRAP_ADMIN_EMAIL:-}
+      APP_BOOTSTRAP_ADMIN_PASSWORD: ${APP_BOOTSTRAP_ADMIN_PASSWORD:-}
+      FRONTEND_ORIGIN: http://localhost:8081
+      COOKIE_SECURE: "false"
+    depends_on:
+      database:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c '</dev/tcp/127.0.0.1/8080'"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 45s
+    restart: on-failure:5
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "8081:8080"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  bullyblock-db:

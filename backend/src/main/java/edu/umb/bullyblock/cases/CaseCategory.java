@@ -1,0 +1,3 @@
+package edu.umb.bullyblock.cases;
+
+public enum CaseCategory { BULLYING, SEXUAL_HARASSMENT, DISCRIMINATION, PHYSICAL_AGGRESSION, CYBERBULLYING, OTHER }
